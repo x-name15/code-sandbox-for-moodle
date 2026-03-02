@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/codesandbox/db" VERSION="20260212" COMMENT="Tablas para Code Sandbox: IDE en línea con ejecución remota">
+  <TABLES>
+    
+    <!-- TABLA PRINCIPAL: Configuración de cada instancia de actividad -->
+    <TABLE NAME="codesandbox" COMMENT="Configuración de cada instancia de la actividad Code Sandbox">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="ID del curso"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Nombre de la actividad"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Instrucciones del ejercicio"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="language" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="python" SEQUENCE="false" COMMENT="Lenguaje: python, javascript, java, c, cpp, php, assembly"/>
+        <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="100" SEQUENCE="false" COMMENT="Calificación máxima posible"/>
+        <FIELD NAME="duedate" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Fecha límite (timestamp)"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="use_autograding" TYPE="int" LENGTH="1" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="testcases" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- TABLA DE INTENTOS: Código enviado y resultados de ejecución -->
+    <TABLE NAME="codesandbox_attempts" COMMENT="Entregas de alumnos con código y resultados de ejecución">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="codesandboxid" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" SEQUENCE="false" COMMENT="FK a codesandbox"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" SEQUENCE="false" COMMENT="FK a user"/>
+        
+        <!-- Código del alumno -->
+        <FIELD NAME="code" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Código fuente enviado por el alumno"/>
+        
+        <!-- Inputs del alumno (para testing) -->
+        <FIELD NAME="inputdata" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Inputs proporcionados por el alumno (una por línea)"/>
+        
+        <!-- Estado del intento (Fase 1-3) -->
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="draft" SEQUENCE="false" COMMENT="draft, pending, processing, completed, failed, submitted"/>
+        <FIELD NAME="job_id" TYPE="char" LENGTH="64" NOTNULL="false" SEQUENCE="false" COMMENT="ID único para rastrear job en RabbitMQ"/>
+        
+        <!-- Resultado de ejecución (Fase 3 - Worker Docker) -->
+        <FIELD NAME="stdout" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Salida estándar del código ejecutado"/>
+        <FIELD NAME="stderr" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Errores de compilación o ejecución"/>
+        <FIELD NAME="exitcode" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="Código de salida: 0=éxito, otro=error"/>
+        <FIELD NAME="execution_time" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Tiempo de ejecución en milisegundos"/>
+        
+        <!-- Calificación del profesor (Fase 4) -->
+        <FIELD NAME="grade" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" SEQUENCE="false" COMMENT="Nota asignada por el profesor"/>
+        <FIELD NAME="teachercomment" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Retroalimentación del profesor"/>
+        <FIELD NAME="autograding_results" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Resultados detallados de autograding en JSON"/>
+        
+        <!-- Timestamps -->
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" UNSIGNED="true" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="codesandboxid" TYPE="foreign" FIELDS="codesandboxid" REFTABLE="codesandbox" REFFIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="codesandbox_user" UNIQUE="false" FIELDS="codesandboxid, userid" COMMENT="Buscar intentos de un alumno en una actividad"/>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status" COMMENT="Filtrar por estado"/>
+        <INDEX NAME="job_id" UNIQUE="false" FIELDS="job_id" COMMENT="Buscar por job_id de RabbitMQ"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>

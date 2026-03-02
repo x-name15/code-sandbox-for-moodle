@@ -1,0 +1,10 @@
+{
+    "name": "mod_codesandbox/rabbitmq",
+    "description": "RabbitMQ dependencies for Code Sandbox plugin",
+    "require": {
+        "php-amqplib/php-amqplib": "^3.6"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    }
+}

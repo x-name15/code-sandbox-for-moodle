@@ -1,0 +1,80 @@
+/* Contenedor Principal con sombra y bordes redondeados */
+.codesandbox-ide-wrapper {
+    border: 1px solid #333;
+    border-radius: 6px;
+    background-color: #1e1e1e; /* Mismo color que Monaco Dark */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    overflow: hidden;
+    margin-top: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* 1. Barra Superior (Toolbar) */
+.ide-toolbar {
+    background-color: #252526; /* Un poco más claro que el editor */
+    border-bottom: 1px solid #333;
+    padding: 0 10px;
+    height: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ide-toolbar .file-tab {
+    background-color: #1e1e1e;
+    color: #fff;
+    padding: 8px 15px;
+    border-top: 2px solid #007acc; /* Azul VS Code */
+    font-size: 0.9rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ide-toolbar .toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 2. Editor */
+.ide-editor {
+    height: 500px;
+    width: 100%;
+    /* Sin bordes, se funde con el wrapper */
+}
+
+/* 3. Terminal */
+.ide-terminal-bar {
+    background-color: #252526;
+    color: #ccc;
+    padding: 5px 15px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ide-console {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    padding: 10px 15px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    border-top: none;
+}
+
+/* Ajustes para el botón Run */
+#run-btn {
+    border-radius: 0;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
