@@ -245,6 +245,7 @@ El profesor define una serie de **Casos de Prueba (Test Cases)**. Cada caso cons
     { "id": 1, "input": "5\n5", "expected_output": "10" },
     { "id": 2, "input": "-1\n1", "expected_output": "0" }
   ]
+```
 ---
 
 ## 📁 Estructura del Repositorio
@@ -335,7 +336,7 @@ No esperes respuestas rápidas, lo mantengo en mi tiempo libre.
 ## 📝 Licencia y Créditos
 
 **Licencia:** MIT (úsalo como quieras, pero sin garantías)  
-**Autor:** Un desarrollador que se aburría y quería ver si podía construir esto  
+**Autor:** Mr Jacket
 **Estado:** Experimento funcional, no producto terminado  
 
 **Librerías usadas:**
@@ -347,6 +348,7 @@ No esperes respuestas rápidas, lo mantengo en mi tiempo libre.
 ---
 
 **⚠️ Recordatorio final:** Esto es un proyecto experimental. Úsalo bajo tu propio riesgo.
+
 
 
 
