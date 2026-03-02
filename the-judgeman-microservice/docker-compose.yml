@@ -1,0 +1,46 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: judgeman_mq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "moodle"
+      RABBITMQ_DEFAULT_PASS: "securepass"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build: .
+    container_name: the_judgeman
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      # 1. Acceso al socket Docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 2. Inyección de Configuración (Read Only)
+      - ./config.json:/app/config.json:ro
+      # 3. Volumen compartido para jobs (NUEVA SOLUCIÓN)
+      - judgeman_data:/shared_data
+    extra_hosts:
+      # Permite acceder al host desde el contenedor (para callbacks a Moodle)
+      - "host.docker.internal:host-gateway"
+    environment:
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_USER=moodle
+      - RABBIT_PASS=securepass
+      - CONFIG_PATH=/app/config.json
+
+volumes:
+  judgeman_data:
+    driver: local

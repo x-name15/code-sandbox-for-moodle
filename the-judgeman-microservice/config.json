@@ -1,0 +1,50 @@
+{
+  "rabbitmq": {
+    "queue_name": "moodle_code_jobs",
+    "prefetch_count": 1
+  },
+  "limits": {
+    "memory": "128m",
+    "cpu_quota": 50000,
+    "pids": 50,
+    "timeout_seconds": 5,
+    "max_output_size": 10000
+  },
+  "languages": {
+    "python": {
+      "image": "python:3.9-alpine",
+      "filename": "main.py",
+      "command": "python /jail/main.py"
+    },
+    "javascript": {
+      "image": "node:18-alpine",
+      "filename": "main.js",
+      "command": "node /jail/main.js"
+    },
+    "java": {
+      "image": "openjdk:17-alpine",
+      "filename": "Main.java",
+      "command": "javac /jail/Main.java && java -cp /jail Main"
+    },
+    "c": {
+      "image": "frolvlad/alpine-gxx",
+      "filename": "main.c",
+      "command": "gcc -o /tmp/out /jail/main.c && /tmp/out"
+    },
+    "cpp": {
+      "image": "frolvlad/alpine-gxx",
+      "filename": "main.cpp",
+      "command": "g++ -o /tmp/out /jail/main.cpp && /tmp/out"
+    },
+    "assembly": {
+      "image": "andreburgaud/nasm",
+      "filename": "main.asm",
+      "command": "nasm -f elf64 /jail/main.asm -o /tmp/main.o && ld /tmp/main.o -o /tmp/out && /tmp/out"
+    },
+    "php": {
+      "image": "php:8.2-cli-alpine",
+      "filename": "main.php",
+      "command": "php /jail/main.php"
+    }
+  }
+}

@@ -1,0 +1,247 @@
+import pika
+import docker
+import json
+import os
+import shutil
+import tempfile
+import time
+import sys
+import logging
+import uuid
+import requests
+
+# --- LOGGING SETUP ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
+# --- LOAD CONFIGURATION ---
+CONFIG_PATH = os.getenv('CONFIG_PATH', 'config.json')
+try:
+    with open(CONFIG_PATH, 'r') as f:
+        CONFIG = json.load(f)
+    logger.info(f"Configuration loaded from {CONFIG_PATH}")
+except Exception as e:
+    logger.critical(f"Failed to load configuration: {e}")
+    sys.exit(1)
+
+# Variables de entorno para credenciales
+RABBIT_HOST = os.getenv('RABBIT_HOST', 'localhost')
+RABBIT_USER = os.getenv('RABBIT_USER', 'guest')
+RABBIT_PASS = os.getenv('RABBIT_PASS', 'guest')
+
+docker_client = docker.from_env()
+
+# Shared volume constants
+SHARED_VOLUME_NAME = 'the-judgeman-microservice_judgeman_data'
+SHARED_MOUNT_PATH = '/shared_data'
+
+# Detect if running inside Docker
+def is_running_in_docker():
+    """Check if the worker is running inside a Docker container"""
+    return os.path.exists('/.dockerenv') or os.path.isfile('/proc/self/cgroup')
+
+def fix_callback_url(url):
+    """Fix callback URL to work from inside Docker container"""
+    if not url:
+        return url
+    
+    if is_running_in_docker():
+        # Replace localhost/127.0.0.1 with host.docker.internal to reach the host machine
+        url = url.replace('localhost', 'host.docker.internal')
+        url = url.replace('127.0.0.1', 'host.docker.internal')
+        logger.debug(f"Callback URL adjusted for Docker: {url}")
+    
+    return url
+
+def execute_job(ch, method, properties, body):
+    """ Procesa el mensaje de la cola """
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        logger.error("Invalid JSON payload received. Discarding.")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
+
+    job_id = payload.get('job_id', 'unknown')
+    lang_key = payload.get('language')
+    code = payload.get('code', '')
+    callback_url = payload.get('callback_url')
+    callback_token = payload.get('callback_token')
+    action = payload.get('action', 'run')
+    attempt_id = payload.get('attempt_id')
+
+    logger.info(f"Processing Job ID: {job_id} | Language: {lang_key} | Action: {action}")
+
+    # 1. Validar Lenguaje contra config.json
+    lang_config = CONFIG['languages'].get(lang_key)
+    if not lang_config:
+        logger.warning(f"Job {job_id}: Unsupported language '{lang_key}'")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
+
+    # 2. Preparar entorno usando el volumen compartido
+    running_in_docker = is_running_in_docker()
+    
+    if running_in_docker:
+        # Estamos en Docker: usar el volumen compartido montado en /shared_data
+        job_dir_name = f"job_{job_id}_{uuid.uuid4().hex[:8]}"
+        job_work_dir = os.path.join(SHARED_MOUNT_PATH, job_dir_name)
+        os.makedirs(job_work_dir, exist_ok=True)
+        logger.info(f"Job {job_id}: Using shared volume path: {job_work_dir}")
+    else:
+        # Desarrollo local: usar temp dir tradicional
+        job_work_dir = tempfile.mkdtemp(prefix=f"local_job_{job_id}_")
+        logger.warning(f"Job {job_id}: Running in LOCAL mode (not Docker). Using: {job_work_dir}")
+    
+    logs = ""
+    exit_code = 1
+    limits = CONFIG['limits']
+    container = None
+
+    try:
+        # 3. Escribir código fuente
+        file_path = os.path.join(job_work_dir, lang_config['filename'])
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(code)
+
+        # 4. Ejecutar Docker Sandbox
+        if running_in_docker:
+            # Usar volumen compartido con bind a subdirectorio específico
+            job_dir_name = os.path.basename(job_work_dir)
+            volumes = {
+                SHARED_VOLUME_NAME: {
+                    'bind': '/shared_data',
+                    'mode': 'rw'
+                }
+            }
+            jail_path = f"/shared_data/{job_dir_name}"
+        else:
+            # Modo local: montar directorio local
+            volumes = {
+                job_work_dir: {'bind': '/jail', 'mode': 'ro'}
+            }
+            jail_path = "/jail"
+
+        container = docker_client.containers.run(
+            image=lang_config['image'],
+            command=f"sh -c '{lang_config['command'].replace('/jail', jail_path)}'",
+            volumes=volumes,
+            working_dir=jail_path,
+            # Security Limits from Config
+            network_disabled=True,
+            mem_limit=limits['memory'],
+            pids_limit=limits['pids'],
+            cpu_quota=limits['cpu_quota'],
+            user="nobody",
+            read_only=False, 
+            tmpfs={'/tmp': 'size=64m,exec'},
+            detach=True
+        )
+
+        try:
+            # Wait with timeout
+            result = container.wait(timeout=limits['timeout_seconds'])
+            exit_code = result['StatusCode']
+            logs = container.logs().decode('utf-8')
+        except Exception as e:
+            logger.warning(f"Job {job_id}: Timeout exceeded ({limits['timeout_seconds']}s)")
+            logs = "Execution Timed Out."
+            exit_code = 124  # Standard timeout exit code
+            try:
+                container.kill()
+            except Exception as kill_err:
+                logger.debug(f"Job {job_id}: Failed to kill container: {kill_err}")
+        
+    except Exception as e:
+        logger.error(f"Job {job_id}: System Error - {str(e)}")
+        logs = f"System Error: {str(e)}"
+
+    finally:
+        # Cleanup container (even if in 'Created' state)
+        if container:
+            try:
+                container.remove(force=True)
+                logger.debug(f"Job {job_id}: Container removed successfully")
+            except Exception as rm_err:
+                logger.warning(f"Job {job_id}: Failed to remove container: {rm_err}")
+        
+        # Cleanup job directory
+        try:
+            shutil.rmtree(job_work_dir, ignore_errors=True)
+            logger.debug(f"Job {job_id}: Work directory cleaned")
+        except Exception as cleanup_err:
+            logger.warning(f"Job {job_id}: Failed to clean work directory: {cleanup_err}")
+
+    # 5. Output Result
+    logger.info(f"Job {job_id} Finished | Exit Code: {exit_code}")
+    
+    # 6. Enviar callback a Moodle
+    if callback_url and callback_token:
+        # Fix the callback URL for Docker environment
+        fixed_callback_url = fix_callback_url(callback_url)
+        
+        callback_payload = {
+            'job_id': job_id,
+            'token': callback_token,
+            'status': 'completed' if exit_code == 0 else 'failed',
+            'stdout': logs[:CONFIG['limits'].get('max_output_size', 10000)],  # Limitar tamaño
+            'stderr': '' if exit_code == 0 else logs[:CONFIG['limits'].get('max_output_size', 10000)],
+            'exitcode': exit_code,
+            'execution_time': None,  # TODO: calcular tiempo real
+            'action': action
+        }
+        
+        try:
+            response = requests.post(
+                fixed_callback_url,
+                json=callback_payload,
+                timeout=10,
+                headers={'Content-Type': 'application/json'}
+            )
+            if response.status_code == 200:
+                logger.info(f"Job {job_id}: Callback sent successfully")
+            else:
+                logger.warning(f"Job {job_id}: Callback failed with status {response.status_code}: {response.text}")
+        except requests.RequestException as e:
+            logger.error(f"Job {job_id}: Failed to send callback: {e}")
+    else:
+        logger.warning(f"Job {job_id}: No callback URL provided, results not reported")
+    
+    # Confirmar a RabbitMQ
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+
+def main():
+    while True:
+        try:
+            credentials = pika.PlainCredentials(RABBIT_USER, RABBIT_PASS)
+            params = pika.ConnectionParameters(
+                host=RABBIT_HOST, 
+                credentials=credentials,
+                heartbeat=600
+            )
+            connection = pika.BlockingConnection(params)
+            channel = connection.channel()
+            
+            queue_name = CONFIG['rabbitmq']['queue_name']
+            channel.queue_declare(queue=queue_name, durable=True)
+            channel.basic_qos(prefetch_count=CONFIG['rabbitmq']['prefetch_count'])
+            
+            channel.basic_consume(queue=queue_name, on_message_callback=execute_job)
+            
+            logger.info(f"Worker Service Started. Listening on queue: {queue_name}")
+            channel.start_consuming()
+        
+        except pika.exceptions.AMQPConnectionError:
+            logger.error("RabbitMQ unavailable. Retrying in 5 seconds...")
+            time.sleep(5)
+        except Exception as e:
+            logger.critical(f"Fatal Error: {e}")
+            time.sleep(5)
+
+if __name__ == '__main__':
+    main()
