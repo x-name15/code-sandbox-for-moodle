@@ -311,16 +311,7 @@ Examen con 3 problemas de programación. Los estudiantes tienen 90 minutos. El s
 ### Caso 3: Taller de JavaScript
 Actividad de práctica sin calificación automática. Los estudiantes usan el editor para experimentar con código JavaScript. El bloque lateral muestra su historial de runs para que vean su progreso. El profesor puede revisar manualmente y dar retroalimentación.
 
----
-
-## 📚 Documentación Adicional
-
-- **Guía del Profesor:** [mod_codesandbox/docs/PROFESSOR_PANEL_GUIDE.md](mod_codesandbox/PROFESSOR_PANEL_GUIDE.md)
-- **Flujo de Inputs:** [mod_codesandbox/docs/INPUTS_FLOW.md](mod_codesandbox/docs/INPUTS_FLOW.md)
-- **Guía del Worker:** [the-judgeman-microservice/LEEME_MOD_DEVELOPER.md](the-judgeman-microservice/LEEME_MOD_DEVELOPER.md)
-- **Debug de Inputs:** [mod_codesandbox/DEBUG_INPUTS.md](mod_codesandbox/DEBUG_INPUTS.md)
-
----
+---
 
 ## 🤝 Contribuciones
 
@@ -329,7 +320,6 @@ Este es un proyecto personal experimental. Si encuentras bugs o quieres mejorarl
 2. Crea una branch con tu feature
 3. Haz un PR
 
-No esperes respuestas rápidas, lo mantengo en mi tiempo libre.
 
 ---
 
