@@ -314,7 +314,7 @@ docker exec -it judgeman-worker ping host.docker.internal
 
 ## 📝 Licencia
 
-MIT License (úsalo como quieras, pero sin garantías)
+GNU License (úsalo como quieras, pero sin garantías)
 
 ## 🎓 Sobre este Proyecto
 
@@ -331,6 +331,3 @@ MIT License (úsalo como quieras, pero sin garantías)
 > **Es un experimento funcional, no un producto terminado.**
 
 ---
-
-**Estado:** Experimento personal - Funcional pero no production-ready  
-**Creado por:** Un desarrollador curioso que quería ver hasta dónde llegaba
