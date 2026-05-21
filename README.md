@@ -311,7 +311,8 @@ Examen con 3 problemas de programación. Los estudiantes tienen 90 minutos. El s
 ### Caso 3: Taller de JavaScript
 Actividad de práctica sin calificación automática. Los estudiantes usan el editor para experimentar con código JavaScript. El bloque lateral muestra su historial de runs para que vean su progreso. El profesor puede revisar manualmente y dar retroalimentación.
 
----
+---
+
 
 ## 🤝 Contribuciones
 
@@ -325,9 +326,9 @@ Este es un proyecto personal experimental. Si encuentras bugs o quieres mejorarl
 
 ## 📝 Licencia y Créditos
 
-**Licencia:** MIT (úsalo como quieras, pero sin garantías)  
-**Autor:** Mr Jacket
-**Estado:** Experimento funcional, no producto terminado  
+- **Licencia:** GNU (úsalo como quieras, pero sin garantías)  
+- **Autor:** Mr Jacket
+- **Estado:** Experimento funcional, no producto terminado  
 
 **Librerías usadas:**
 - Monaco Editor (Microsoft)
