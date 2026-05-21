@@ -1,241 +1,238 @@
-# 📦 Moodle CodeSandbox - Sistema Completo
+# 📦 Moodle CodeSandbox - Complete System
 
 > ## ⚠️ **Disclaimer**
 > 
-> Esto es un experimento personal que hice por aburrimiento para ver hasta dónde llegaba. No es un producto comercial. Úsalo bajo tu propio riesgo en ambientes de desarrollo/prueba.
+> This is a personal experiment I made out of curiosity to see how far it could go. It is not a commercial product. Use it at your own risk in development/test environments.
 
 ---
 
-## 🎯 ¿Qué es esto?
+## 🎯 What is this?
 
-**CodeSandbox** es un sistema completo que transforma Moodle en un entorno de desarrollo integrado (IDE) para enseñar programación. Permite a estudiantes escribir, ejecutar y entregar código en tiempo real, mientras los profesores revisan y califican las entregas.
+**CodeSandbox** is a complete system that turns Moodle into an integrated development environment (IDE) for teaching programming. It lets students write, run, and submit code in real time, while instructors review and grade submissions.
 
-### Lo que hace diferente a esto:
-- **Ejecuta código REAL** en contenedores Docker aislados (no es solo un editor de texto)
-- **Arquitectura asíncrona** con colas de mensajes (RabbitMQ) para manejar cientos de ejecuciones simultáneas
-- **Feedback inmediato** con resultados de ejecución (stdout/stderr)
-- **Calificación automática** mediante casos de prueba input/output
-- **Monitoreo en tiempo real** con historial de ejecuciones
+### What makes this different:
+- **Runs REAL code** in isolated Docker containers (not just a text editor)
+- **Asynchronous architecture** with message queues (RabbitMQ) to handle hundreds of concurrent runs
+- **Instant feedback** with execution results (stdout/stderr)
+- **Automatic grading** via input/output test cases
+- **Real-time monitoring** with execution history
 
-## 📦 Componentes del Proyecto
+## 📦 Project Components
 
-Este repositorio contiene **3 componentes principales** que trabajan juntos:
+This repository contains **3 main components** that work together:
 
-### 1️⃣ **mod_codesandbox** - Actividad Principal
-Plugin de actividad para Moodle que proporciona:
-- Editor Monaco (VS Code en el navegador)
-- Gestión de entregas y estados (draft/submitted/graded)
-- Sistema de calificación automática (test cases)
-- Panel de revisión para profesores
-- Soporte multi-lenguaje (Python, JavaScript, Java, C++, etc.)
+### 1️⃣ **mod_codesandbox** - Main Activity
+Moodle activity plugin that provides:
+- Monaco Editor (VS Code in the browser)
+- Submission and status management (draft/submitted/graded)
+- Automatic grading system (test cases)
+- Teacher review panel
+- Multi-language support (Python, JavaScript, Java, C++, etc.)
 
-📂 **Directorio:** `mod_codesandbox/`  
-📖 **Docs:** Ver [mod_codesandbox/docs/README.md](mod_codesandbox/docs/README.md)
+📂 **Directory:** `mod_codesandbox/`  
+📖 **Docs:** See [mod_codesandbox/docs/README.md](mod_codesandbox/docs/README.md)
 
-### 2️⃣ **block_codesandbox** - Panel de Monitoreo
-Bloque lateral complementario que muestra:
-- 📸 **Snapshot del último run** (código, estado, tiempo de ejecución)
-- 📊 **Historial de ejecuciones** (últimas 5 con indicadores de éxito/fallo)
-- 📝 **Scratchpad persistente** (notas con autoguardado por actividad)
+### 2️⃣ **block_codesandbox** - Monitoring Panel
+Complementary sidebar block that shows:
+- 📸 **Snapshot of the last run** (code, status, execution time)
+- 📊 **Execution history** (last 5 runs with success/failure indicators)
+- 📝 **Persistent scratchpad** (auto-saved notes per activity)
 
-📂 **Directorio:** `block_codesandbox/`  
-📖 **Docs:** Ver [block_codesandbox/docs/README.md](block_codesandbox/docs/README.md)
+📂 **Directory:** `block_codesandbox/`  
+📖 **Docs:** See [block_codesandbox/docs/README.md](block_codesandbox/docs/README.md)
 
-### 3️⃣ **the-judgeman-microservice** - Worker de Ejecución
-Microservicio Python que:
-- Consume trabajos de RabbitMQ
-- Ejecuta código en contenedores Docker efímeros
-- Aplica límites de seguridad (timeout, memoria, CPU)
-- Devuelve resultados a Moodle vía callback HTTP
+### 3️⃣ **the-judgeman-microservice** - Execution Worker
+Python microservice that:
+- Consumes jobs from RabbitMQ
+- Runs code in ephemeral Docker containers
+- Applies security limits (timeout, memory, CPU)
+- Sends results back to Moodle via HTTP callback
 
-📂 **Directorio:** `the-judgeman-microservice/`  
-📖 **Docs:** Ver [the-judgeman-microservice/README.md](the-judgeman-microservice/README.md)
+📂 **Directory:** `the-judgeman-microservice/`  
+📖 **Docs:** See [the-judgeman-microservice/README.md](the-judgeman-microservice/README.md)
 
 ---
 
-## 🚀 Instalación Rápida
+## 🚀 Quick Install
 
-### Prerequisitos
-- Moodle 3.9+ (probado en 4.x)
-- Docker y Docker Compose
-- RabbitMQ (puede ejecutarse vía Docker)
-- PHP 7.4+ con extensión `php-amqplib`
+### Prerequisites
+- Moodle 3.9+ (tested on 4.x)
+- Docker and Docker Compose
+- RabbitMQ (can be run via Docker)
+- PHP 7.4+ with `php-amqplib` extension
 
-### Paso a Paso
+### Step by Step
 
-1. **Instalar los plugins de Moodle**
+1. **Install the Moodle plugins**
 ```bash
 cd /var/www/html/moodle
 
-# Módulo de actividad
+# Activity module
 cp -r mod_codesandbox mod/codesandbox
 
-# Bloque de monitoreo
+# Monitoring block
 cp -r block_codesandbox blocks/codesandbox
 
-# Actualizar BD desde interfaz de Moodle
-# Admin -> Notificaciones -> Upgrade
+# Update DB from Moodle UI
+# Admin -> Notifications -> Upgrade
 ```
 
-2. **Configurar RabbitMQ**
+2. **Configure RabbitMQ**
 ```bash
 docker run -d --name rabbitmq \
   -p 5672:5672 -p 15672:15672 \
   rabbitmq:3-management
 ```
 
-3. **Desplegar el Worker**
+3. **Deploy the Worker**
 ```bash
 cd the-judgeman-microservice
 cp .env.example .env
-# Editar .env con las credenciales de RabbitMQ y Moodle
+# Edit .env with RabbitMQ and Moodle credentials
 docker-compose up -d
 ```
 
-4. **Configurar el plugin en Moodle**
-- Ir a: Administración del sitio → Plugins → Actividades → Code Sandbox
-- Configurar:
+4. **Configure the plugin in Moodle**
+- Go to: Site administration -> Plugins -> Activities -> Code Sandbox
+- Configure:
   - RabbitMQ host/port/credentials
-  - Callback token (secreto compartido con el worker)
-  - Lenguajes permitidos
+  - Callback token (shared secret with the worker)
+  - Allowed languages
 
-Ver documentación detallada en cada componente.
-
----
-
-## ✨ Características Destacadas
-
-### Para Estudiantes
-- ✅ **Editor profesional** (Monaco - mismo que VS Code)
-- ✅ **Sintaxis highlighting** para múltiples lenguajes
-- ✅ **Ejecución instantánea** con feedback en tiempo real
-- ✅ **Historial de runs** visible en el sidebar
-- ✅ **Scratchpad persistente** para tomar notas
-- ✅ **Modo solo-lectura** después de entregar
-
-### Para Profesores
-- ✅ **Dashboard de entregas** con filtros y búsqueda
-- ✅ **Revisión de código** con resultados de ejecución
-- ✅ **Calificación automática** mediante test cases
-- ✅ **Calificación manual** opcional con comentarios
-- ✅ **Estadísticas de ejecuciones** por estudiante
-- ✅ **Exportación de entregas** (código + resultados)
-
-### Técnicas/Seguridad
-- ✅ **Arquitectura asíncrona** con message queue
-- ✅ **Contenedores efímeros** (se destruyen tras cada ejecución)
-- ✅ **Límites de recursos** (CPU, memoria, timeout)
-- ✅ **Aislamiento de red** (sin acceso a internet desde contenedores)
-- ✅ **Usuario non-root** en contenedores
-- ✅ **Token-based callbacks** (webhook seguro)
+See detailed documentation in each component.
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## ✨ Highlights
 
-El sistema utiliza una arquitectura **desacoplada y asíncrona** para garantizar la seguridad del servidor Moodle y la escalabilidad ante cientos de ejecuciones simultáneas.
+### For Students
+- ✅ **Professional editor** (Monaco - same as VS Code)
+- ✅ **Syntax highlighting** for multiple languages
+- ✅ **Instant execution** with real-time feedback
+- ✅ **Run history** visible in the sidebar
+- ✅ **Persistent scratchpad** for notes
+- ✅ **Read-only mode** after submission
 
-### Diagrama de Flujo de Datos
-`[Estudiante (Navegador)]` -> `[Moodle (Plugin)]` -> `[RabbitMQ (Cola)]` -> `[Worker (Consumer)]` -> `[Docker (Sandbox)]`
+### For Teachers
+- ✅ **Submission dashboard** with filters and search
+- ✅ **Code review** with execution results
+- ✅ **Automatic grading** via test cases
+- ✅ **Optional manual grading** with comments
+- ✅ **Execution stats** per student
+- ✅ **Export submissions** (code + results)
 
-### 🧩 Componentes Principales
+### Technical/Security
+- ✅ **Asynchronous architecture** with a message queue
+- ✅ **Ephemeral containers** (destroyed after each run)
+- ✅ **Resource limits** (CPU, memory, timeout)
+- ✅ **Network isolation** (no internet access from containers)
+- ✅ **Non-root user** in containers
+- ✅ **Token-based callbacks** (secure webhook)
+
+---
+
+## 🏗️ System Architecture
+
+The system uses a **decoupled, asynchronous** architecture to ensure Moodle server safety and scalability under hundreds of concurrent runs.
+
+### Data Flow Diagram
+`[Student (Browser)]` -> `[Moodle (Plugin)]` -> `[RabbitMQ (Queue)]` -> `[Worker (Consumer)]` -> `[Docker (Sandbox)]`
+
+### 🧩 Main Components
 
 #### 1. Frontend (Moodle Plugin)
-* **Tecnología:** PHP (Moodle API), JavaScript (AMD Modules), Monaco Editor.
-* **Responsabilidad:** * Renderizar el editor de código (VS Code style).
-    * Gestionar estados (`draft`, `submitted`, `graded`).
-    * Enviar peticiones de ejecución a la cola.
-    * Recibir los resultados via Webhook/Callback.
+* **Technology:** PHP (Moodle API), JavaScript (AMD Modules), Monaco Editor.
+* **Responsibility:** Render the code editor (VS Code style).
+    * Manage states (`draft`, `submitted`, `graded`).
+    * Send execution requests to the queue.
+    * Receive results via Webhook/Callback.
 
 #### 2. Message Broker (RabbitMQ)
-* **Rol:** Buffer de peticiones.
-* **Responsabilidad:** Desacoplar la petición web de la ejecución pesada. Si 500 alumnos envían código a la vez, RabbitMQ los encola y los entrega ordenadamente a los Workers, evitando que el servidor web de Moodle colapse.
+* **Role:** Request buffer.
+* **Responsibility:** Decouple the web request from heavy execution. If 500 students submit at once, RabbitMQ queues them and delivers them to workers in order, preventing the Moodle web server from collapsing.
 
-#### 3. The Worker (El Ejecutor)
-* **Tecnología:** Python / Node.js (Daemon).
-* **Responsabilidad:** * Escuchar la cola `moodle_code_jobs`.
-    * Orquestar el ciclo de vida de los contenedores Docker.
-    * **Seguridad:** Aplicar límites de tiempo (timeout) y memoria.
-    * Reportar el resultado de vuelta a Moodle.
+#### 3. The Worker (The Executor)
+* **Technology:** Python / Node.js (Daemon).
+* **Responsibility:** Listen to the `moodle_code_jobs` queue.
+    * Orchestrate the Docker container lifecycle.
+    * **Security:** Enforce time (timeout) and memory limits.
+    * Report results back to Moodle.
 
 #### 4. The Sandbox (Docker)
-* **Rol:** Entorno de ejecución efímero.
-* **Funcionamiento:**
-    * Se crea un contenedor **nuevo** por cada ejecución (`docker run`).
-    * Se inyecta el código del alumno.
-    * Se ejecuta el script.
-    * Se captura `STDOUT` y `STDERR`.
-    * El contenedor se destruye inmediatamente (`--rm`).
-    * **Aislamiento:** Sin acceso a red (opcional), usuario sin privilegios (non-root), sistema de archivos de solo lectura.
+* **Role:** Ephemeral execution environment.
+* **How it works:**
+    * A **new** container is created per run (`docker run`).
+    * Student code is injected.
+    * The script runs.
+    * `STDOUT` and `STDERR` are captured.
+    * The container is immediately destroyed (`--rm`).
+    * **Isolation:** No network access (optional), non-privileged user (non-root), read-only filesystem.
 
 ---
 
-## 🔄 Flujo de Ejecución Detallado (The Lifecycle)
+## 🔄 Detailed Execution Flow (The Lifecycle)
 
-1.  **Submit/Run:** El usuario pulsa "Ejecutar". El JS envía el código a `run.php`.
-2.  **Encolado:** Moodle crea un registro en la tabla `mdl_codesandbox_attempts` con estado `pending` y un `job_id` único. Envía el payload a RabbitMQ.
-3.  **Consumo:** El Worker detecta un nuevo mensaje.
-4.  **Aislamiento:** El Worker instancia un contenedor Docker específico para el lenguaje (ej: `python:3.9-alpine`).
-5.  **Ejecución:** El código corre dentro del contenedor.
-    * *Si tarda > 5s:* El Worker mata el contenedor (Timeout).
-    * *Si usa mucha RAM:* Docker lo mata (OOM Kill).
-6.  **Callback:** El Worker envía el resultado (JSON) a Moodle mediante una API interna (`callback.php`).
-7.  **Feedback:** Moodle actualiza la BD y notifica al usuario (vía WebSocket o Polling AJAX) que su resultado está listo.
-
----
-
-## 🛡️ Medidas de Seguridad
-
-Dado que permitimos ejecutar código arbitrario, la seguridad es la prioridad #1:
-
-* **Contenedores Efímeros:** Ningún estado se guarda. Cada ejecución es "limpia".
-* **Usuario Non-Root:** El código del alumno corre como usuario `nobody` o `sandbox` dentro del contenedor.
-* **Límites de Recursos:** Flags de Docker `--memory="128m" --cpus="0.5"`.
-* **Timeouts:** Hard limit de ejecución (ej. 5 segundos) para evitar bucles infinitos (`while True: pass`).
-* **Network Ban:** Los contenedores se lanzan con `--network none` para evitar ataques a la red local o descargas maliciosas.
+1.  **Submit/Run:** The user clicks "Run". JS sends the code to `run.php`.
+2.  **Queueing:** Moodle creates a record in `mdl_codesandbox_attempts` with status `pending` and a unique `job_id`. It sends the payload to RabbitMQ.
+3.  **Consume:** The Worker receives a new message.
+4.  **Isolation:** The Worker spins up a Docker container for the language (e.g., `python:3.9-alpine`).
+5.  **Execution:** Code runs inside the container.
+    * *If it takes > 5s:* The Worker kills the container (Timeout).
+    * *If it uses too much RAM:* Docker kills it (OOM Kill).
+6.  **Callback:** The Worker sends the result (JSON) to Moodle via an internal API (`callback.php`).
+7.  **Feedback:** Moodle updates the DB and notifies the user (via WebSocket or AJAX polling) that the result is ready.
 
 ---
 
-## 🛠️ Stack Tecnológico Recomendado para el Backend
-* **Broker:** RabbitMQ (imagen oficial `rabbitmq:3-management`).
-* **Worker:** Python 3 con librería `pika` (cliente RabbitMQ) y `docker` (SDK Docker).
-* **Contenedores:** Alpine Linux (ligero y rápido).
+## 🛡️ Security Measures
 
+Because arbitrary code execution is allowed, security is priority #1:
 
+* **Ephemeral Containers:** No state is saved. Each run is "clean".
+* **Non-Root User:** Student code runs as `nobody` or `sandbox` inside the container.
+* **Resource Limits:** Docker flags `--memory="128m" --cpus="0.5"`.
+* **Timeouts:** Hard execution limit (e.g., 5 seconds) to avoid infinite loops (`while True: pass`).
+* **Network Ban:** Containers are launched with `--network none` to prevent local network attacks or malicious downloads.
 
+---
 
-## 🧠 Sistema de Evaluación Automática (I/O Matching)
+## 🛠️ Recommended Backend Stack
+* **Broker:** RabbitMQ (official image `rabbitmq:3-management`).
+* **Worker:** Python 3 with `pika` (RabbitMQ client) and `docker` (Docker SDK).
+* **Containers:** Alpine Linux (lightweight and fast).
 
-El plugin implementa una estrategia de calificación de **Nivel 2: Comparación de Entrada/Salida (Black Box Testing)**. Esta metodología evalúa el comportamiento del código sin analizar su sintaxis interna, garantizando objetividad y soporte para múltiples lenguajes.
+## 🧠 Automatic Grading System (I/O Matching)
 
-### ⚙️ Lógica de Calificación
-El profesor define una serie de **Casos de Prueba (Test Cases)**. Cada caso consta de:
-* **Input (stdin):** Datos que se inyectarán al programa (ej: números, textos).
-* **Expected Output (stdout):** La respuesta exacta que debe imprimir el programa.
+The plugin implements a **Level 2: Input/Output Comparison (Black Box Testing)** grading strategy. This methodology evaluates code behavior without analyzing internal syntax, ensuring objectivity and multi-language support.
 
-### 🔄 Flujo Técnico de Evaluación
+### ⚙️ Grading Logic
+The teacher defines a set of **Test Cases**. Each case includes:
+* **Input (stdin):** Data injected into the program (e.g., numbers, text).
+* **Expected Output (stdout):** The exact output the program should print.
 
-1.  **Preparación (Moodle):**
-    * El profesor crea la actividad y añade 3 casos de prueba.
-    * Al enviar la tarea, Moodle construye un payload JSON que incluye:
-        * `source_code`: El script del alumno.
+### 🔄 Evaluation Technical Flow
+
+1.  **Preparation (Moodle):**
+    * The teacher creates the activity and adds 3 test cases.
+    * When submitting, Moodle builds a JSON payload that includes:
+        * `source_code`: The student's script.
         * `test_cases`: `[{ "in": "2 2", "out": "4" }, { "in": "10 5", "out": "15" }]`.
 
-2.  **Ejecución Iterativa (Worker):**
-    * El Worker recibe el trabajo y levanta el contenedor Docker.
-    * **Bucle de Pruebas:** Por cada caso de prueba, el Worker ejecuta el código inyectando el `input` a través del flujo de entrada estándar (`stdin`).
-    * **Captura:** Se captura el `stdout` generado por el contenedor.
+2.  **Iterative Execution (Worker):**
+    * The Worker receives the job and starts the Docker container.
+    * **Test Loop:** For each test case, the Worker runs the code and injects the `input` through `stdin`.
+    * **Capture:** It captures the container's `stdout`.
 
-3.  **Validación y Puntuación:**
-    * **Normalización:** Se limpian espacios en blanco y saltos de línea extra (`trim()`).
-    * **Comparación:** Se compara `Output Real === Output Esperado`.
-    * **Cálculo:** Si el alumno pasa 2 de 3 tests, el Worker calcula: `Score = (2/3) * 100 = 66.6%`.
+3.  **Validation and Scoring:**
+    * **Normalization:** Trim extra whitespace and newlines (`trim()`).
+    * **Comparison:** `Actual Output === Expected Output`.
+    * **Calculation:** If the student passes 2 of 3 tests, the Worker computes: `Score = (2/3) * 100 = 66.6%`.
 
 4.  **Feedback (Moodle):**
-    * El Worker devuelve a Moodle el puntaje final y el detalle de cada test (cuáles pasaron y cuáles fallaron).
-    * Moodle actualiza automáticamente el **Libro de Calificaciones (Gradebook)** con la nota calculada.
+    * The Worker returns the final score and test details (which passed/failed).
+    * Moodle automatically updates the **Gradebook** with the computed score.
 
-### 📊 Ejemplo de Payload (RabbitMQ)
+### 📊 Payload Example (RabbitMQ)
 ```json
 {
   "job_id": "abc-123",
@@ -248,89 +245,87 @@ El profesor define una serie de **Casos de Prueba (Test Cases)**. Cada caso cons
 ```
 ---
 
-## 📁 Estructura del Repositorio
+## 📁 Repository Structure
 
 ```
 codesandbox/
-├── mod_codesandbox/          # Módulo de actividad principal
-│   ├── view.php              # Vista del estudiante
-│   ├── run.php               # Endpoint ejecución
-│   ├── callback.php          # Receptor de resultados
-│   ├── report.php            # Dashboard profesor
-│   ├── amd/src/              # JavaScript (AMD modules)
-│   ├── classes/              # PHP Classes
-│   │   ├── grader.php        # Lógica de calificación
+├── mod_codesandbox/           # Main activity module
+│   ├── view.php               # Student view
+│   ├── run.php                # Execution endpoint
+│   ├── callback.php           # Result receiver
+│   ├── report.php             # Teacher dashboard
+│   ├── amd/src/               # JavaScript (AMD modules)
+│   ├── classes/               # PHP Classes
+│   │   ├── grader.php         # Grading logic
 │   │   └── rabbitmq_client.php
-│   ├── db/                   # Database schema
-│   ├── lang/                 # Strings i18n
-│   └── vendor/               # Dependencies (Composer)
+│   ├── db/                    # Database schema
+│   ├── lang/                  # i18n strings
+│   └── vendor/                # Dependencies (Composer)
 │
-├── block_codesandbox/        # Bloque lateral de monitoreo
-│   ├── block_codesandbox.php # Lógica del bloque
-│   ├── externallib.php       # Web services
-│   ├── amd/src/notes.js      # Scratchpad logic
-│   ├── db/                   # DB tables (snapshot, history, notes)
-│   └── lang/                 # Translations
+├── block_codesandbox/         # Monitoring sidebar block
+│   ├── block_codesandbox.php  # Block logic
+│   ├── externallib.php        # Web services
+│   ├── amd/src/notes.js       # Scratchpad logic
+│   ├── db/                    # DB tables (snapshot, history, notes)
+│   └── lang/                  # Translations
 │
-└── the-judgeman-microservice/ # Worker de ejecución
+└── the-judgeman-microservice/ # Execution worker
     ├── src/
-    │   ├── main.py           # Entry point
-    │   ├── worker.py         # RabbitMQ consumer
-    │   ├── docker_manager.py # Docker orchestration
+    │   ├── main.py            # Entry point
+    │   ├── worker.py          # RabbitMQ consumer
+    │   ├── docker_manager.py  # Docker orchestration
     │   ├── callback_handler.py
     │   └── config.py
-    ├── config.json           # Language configs
-    ├── docker-compose.yml    # Multi-container setup
-    └── requirements.txt      # Python dependencies
+    ├── config.json            # Language configs
+    ├── docker-compose.yml     # Multi-container setup
+    └── requirements.txt       # Python dependencies
 ```
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Tech Stack
 
-| Componente | Tecnología | Propósito |
+| Component | Technology | Purpose |
 |------------|-----------|-----------|
-| **Frontend** | Monaco Editor (TypeScript) | Editor de código tipo VS Code |
-| **Backend** | PHP 7.4+ (Moodle API) | Lógica de negocio y BD |
-| **Message Queue** | RabbitMQ 3.x | Cola de trabajos asíncrona |
-| **Worker** | Python 3.9+ (pika, docker-py) | Consumidor y executor |
-| **Sandbox** | Docker 20.10+ | Contenedores efímeros Linux |
-| **Base de Datos** | PostgreSQL / MySQL | Storage de Moodle |
-| **Comunicación** | HTTP (webhooks) | Callbacks worker→Moodle |
+| **Frontend** | Monaco Editor (TypeScript) | VS Code-like code editor |
+| **Backend** | PHP 7.4+ (Moodle API) | Business logic and DB |
+| **Message Queue** | RabbitMQ 3.x | Async job queue |
+| **Worker** | Python 3.9+ (pika, docker-py) | Consumer and executor |
+| **Sandbox** | Docker 20.10+ | Ephemeral Linux containers |
+| **Database** | PostgreSQL / MySQL | Moodle storage |
+| **Communication** | HTTP (webhooks) | Worker -> Moodle callbacks |
 
 ---
 
-## 🧪 Casos de Uso
+## 🧪 Use Cases
 
-### Caso 1: Clase de Introducción a Python
-Un profesor crea una actividad "Suma de dos números" con 5 test cases. 100 estudiantes entregan código simultáneamente. RabbitMQ encola las ejecuciones, el worker procesa cada una en ~2 segundos, y todos reciben su calificación automática sin saturar el servidor Moodle.
+### Use Case 1: Intro to Python Class
+A teacher creates an activity "Sum of two numbers" with 5 test cases. 100 students submit code simultaneously. RabbitMQ queues executions, the worker processes each in ~2 seconds, and everyone gets automatic grading without overloading the Moodle server.
 
-### Caso 2: Examen de Algoritmos en Vivo
-Examen con 3 problemas de programación. Los estudiantes tienen 90 minutos. El sistema permite múltiples intentos (runs) pero solo la entrega final cuenta para la nota. El profesor revisa después el código de cada estudiante con el historial completo de ejecuciones.
+### Use Case 2: Live Algorithms Exam
+An exam with 3 programming problems. Students have 90 minutes. The system allows multiple runs, but only the final submission counts. The teacher later reviews each student's code with the full execution history.
 
-### Caso 3: Taller de JavaScript
-Actividad de práctica sin calificación automática. Los estudiantes usan el editor para experimentar con código JavaScript. El bloque lateral muestra su historial de runs para que vean su progreso. El profesor puede revisar manualmente y dar retroalimentación.
-
----
-
-
-## 🤝 Contribuciones
-
-Este es un proyecto personal experimental. Si encuentras bugs o quieres mejorarlo:
-1. Fork el repo
-2. Crea una branch con tu feature
-3. Haz un PR
-
+### Use Case 3: JavaScript Workshop
+A practice activity without auto-grading. Students use the editor to experiment with JavaScript. The sidebar block shows run history so they can see progress. The teacher can review manually and provide feedback.
 
 ---
 
-## 📝 Licencia y Créditos
+## 🤝 Contributions
 
-- **Licencia:** GNU (úsalo como quieras, pero sin garantías)  
-- **Autor:** Mr Jacket
-- **Estado:** Experimento funcional, no producto terminado  
+This is an experimental personal project. If you find bugs or want to improve it:
+1. Fork the repo
+2. Create a branch with your feature
+3. Open a PR
 
-**Librerías usadas:**
+---
+
+## 📝 License and Credits
+
+- **License:** GNU (use it as you want, but without warranties)  
+- **Author:** Mr Jacket
+- **Status:** Functional experiment, not a finished product  
+
+**Libraries used:**
 - Monaco Editor (Microsoft)
 - php-amqplib (Videla/Alvarez)
 - Docker SDK for Python
@@ -338,8 +333,4 @@ Este es un proyecto personal experimental. Si encuentras bugs o quieres mejorarl
 
 ---
 
-**⚠️ Recordatorio final:** Esto es un proyecto experimental. Úsalo bajo tu propio riesgo.
-
-
-
-
+**⚠️ Final reminder:** This is an experimental project. Use it at your own risk.
