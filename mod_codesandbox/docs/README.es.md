@@ -277,14 +277,6 @@ Este plugin soporta múltiples idiomas usando el sistema de paquetes de idioma d
 
 Para añadir más idiomas, crea un nuevo archivo de idioma en `lang/<código-idioma>/codesandbox.php` siguiendo la misma estructura.
 
-## 📝 Hoja de Ruta de Desarrollo
-
-- [x] **Fase 1 (MVP)**: Integración de editor Monaco, soporte multi-lenguaje, intentos borrador
-- [x] **Fase 2 (Conectividad)**: Integración de RabbitMQ, procesamiento asíncrono de trabajos
-- [x] **Fase 3 (Worker)**: Servicio worker externo con ejecución en Docker
-- [x] **Fase 4 (Evaluación)**: Panel de instructor para revisar y calificar entregas
-- [ ] **Fase 5 (Avanzado)**: Soporte de pruebas unitarias, casos de prueba personalizados, detección de plagio
-
 ## 🤝 Contribuir
 
 ¡Las contribuciones son bienvenidas! Por favor:
@@ -298,20 +290,5 @@ Para añadir más idiomas, crea un nuevo archivo de idioma en `lang/<código-idi
 ## 📄 Licencia
 
 Este proyecto está licenciado bajo **GNU GPL v3** (o posterior) para cumplir con los requisitos de licencia de Moodle.
-
-## 🙏 Créditos
-
-- **Monaco Editor**: Microsoft Corporation
-- **php-amqplib**: Mantenido por la comunidad PHP AMQP
-- **Moodle**: Martin Dougiamas y la comunidad Moodle
-
-## 📧 Soporte
-
-Para reportes de errores, solicitudes de características o preguntas generales:
-
-- Abre un issue en GitHub
-- Contacto: [tu-email@ejemplo.com]
-
----
 
 **Hecho con ❤️ para la comunidad educativa**
