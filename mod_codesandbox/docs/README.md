@@ -277,13 +277,6 @@ This plugin supports multiple languages using Moodle's language pack system:
 
 To add more languages, create a new language file in `lang/<langcode>/codesandbox.php` following the same structure.
 
-## 📝 Development Roadmap
-
-- [x] **Phase 1 (MVP)**: Monaco editor integration, multi-language support, draft attempts
-- [x] **Phase 2 (Connectivity)**: RabbitMQ integration, asynchronous job processing
-- [x] **Phase 3 (Worker)**: External worker service with Docker execution
-- [x] **Phase 4 (Evaluation)**: Instructor dashboard for reviewing and grading submissions
-- [ ] **Phase 5 (Advanced)**: Unit test support, custom test cases, plagiarism detection
 
 ## 🤝 Contributing
 
@@ -299,18 +292,6 @@ Contributions are welcome! Please:
 
 This project is licensed under the **GNU GPL v3** (or later) to comply with Moodle's license requirements.
 
-## 🙏 Credits
-
-- **Monaco Editor**: Microsoft Corporation
-- **php-amqplib**: Maintained by the PHP AMQP community
-- **Moodle**: Martin Dougiamas and the Moodle community
-
-## 📧 Support
-
-For bug reports, feature requests, or general questions:
-
-- Open an issue on GitHub
-- Contact: [your-email@example.com]
 
 ---
 
